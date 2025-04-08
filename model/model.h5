@@ -1,0 +1,81 @@
+# 1. Import required libraries
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.layers import AveragePooling2D, Dropout, Flatten, Dense, Input
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from tensorflow.keras.utils import to_categorical
+from sklearn.preprocessing import LabelBinarizer
+import numpy as np
+import os
+import cv2
+
+# 2. Set dataset paths
+TRAIN_DIR = "car_data/data1a/training"
+VAL_DIR = "car_data/data1a/validation"
+CATEGORIES = ["00-damage", "01-whole"]
+
+# 3. Load data
+data = []
+labels = []
+
+for category in CATEGORIES:
+    folder = os.path.join(TRAIN_DIR, category)
+    for img in os.listdir(folder):
+        path = os.path.join(folder, img)
+        image = load_img(path, target_size=(224, 224))
+        image = img_to_array(image)
+        image = image / 255.0
+        data.append(image)
+        labels.append(category)
+
+# 4. Encode labels
+lb = LabelBinarizer()
+labels = lb.fit_transform(labels)
+labels = to_categorical(labels)
+
+# 5. Convert to NumPy
+data = np.array(data, dtype="float32")
+labels = np.array(labels)
+
+# 6. Data Augmentation
+aug = ImageDataGenerator(
+    rotation_range=20,
+    zoom_range=0.15,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.15,
+    horizontal_flip=True,
+    fill_mode="nearest"
+)
+
+# 7. Build Model
+baseModel = MobileNetV2(weights="imagenet", include_top=False,
+                        input_tensor=Input(shape=(224, 224, 3)))
+
+headModel = baseModel.output
+headModel = AveragePooling2D(pool_size=(7, 7))(headModel)
+headModel = Flatten()(headModel)
+headModel = Dense(128, activation="relu")(headModel)
+headModel = Dropout(0.5)(headModel)
+headModel = Dense(2, activation="softmax")(headModel)
+
+model = Model(inputs=baseModel.input, outputs=headModel)
+
+# Freeze base layers
+for layer in baseModel.layers:
+    layer.trainable = False
+
+# 8. Compile
+model.compile(loss="binary_crossentropy", optimizer=Adam(learning_rate=1e-4), metrics=["accuracy"])
+
+# 9. Train
+H = model.fit(
+    aug.flow(data, labels, batch_size=32),
+    steps_per_epoch=len(data) // 32,
+    epochs=10
+)
+
+# 10. Save the model
+model.save("model.h5")
