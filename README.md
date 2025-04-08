@@ -23,10 +23,4 @@ car_data/data1a/ ├── training/ │ ├── 00-damage/ │ └── 01-w
 | `dam1.jpeg`, `whole1.jpeg` | Example test images |
 | `requirements.txt` | Required Python packages |
 
-## Requirements
-- Python 3.7+
-- TensorFlow
-- NumPy
-- scikit-learn
-- matplotlib (optional for visualization)
 
