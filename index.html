@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Car Damage Detector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px;
+    }
+    .container {
+      max-width: 500px;
+      margin: auto;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    input[type="file"] {
+      margin: 15px 0;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Car Damage Detection</h1>
+    <form action="/predict" method="post" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" required><br>
+      <input type="submit" value="Upload and Predict">
+    </form>
+
+    {% if prediction %}
+      <h3>Prediction: {{ prediction }}</h3>
+      <img src="{{ image_url }}" alt="Uploaded Image">
+    {% endif %}
+  </div>
+</body>
+</html>
